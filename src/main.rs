@@ -7,11 +7,11 @@ use axum::{
     routing::get,
 };
 use chrono::Utc;
-use hypurr_exporter::{vault_details::get_vault_details, metrics::Metrics};
+use hypurr_exporter::{metrics::Metrics, vault_details::get_vault_details, user_details::get_user_details};
 use prometheus::{Encoder, Registry, TextEncoder};
-use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -52,20 +52,22 @@ pub async fn handle_metrics(
 ) -> Result<Response, (StatusCode, String)> {
     let AppState { metrics, registry } = app_state;
 
-    let vault_details = get_vault_details().await
-    .unwrap_or_else(|e| {
+    let vault_details = get_vault_details().await.unwrap_or_else(|e| {
         error!("Failed receive the vault details: {e:?}");
         (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, false, false)
     });
 
+    let user_details = get_user_details().await.unwrap_or_else(|e| {
+        error!("Failed receive the vault details: {e:?}");
+        (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
+    });
+
     let metrics = metrics.lock().await;
-    metrics
-        .update(vault_details.0, vault_details.1, vault_details.2, vault_details.3, vault_details.4, vault_details.5, vault_details.6, vault_details.7, vault_details.8, vault_details.9)
-        .map_err(|e| {
-            let error_message = format!("Failed to update metrics: {e:?}");
-            error!(error_message);
-            (StatusCode::INTERNAL_SERVER_ERROR, error_message)
-        })?;
+    metrics.update(vault_details, user_details).map_err(|e| {
+        let error_message = format!("Failed to update metrics: {e:?}");
+        error!(error_message);
+        (StatusCode::INTERNAL_SERVER_ERROR, error_message)
+    })?;
 
     let encoder = TextEncoder::new();
     let metric_families = registry.gather();
