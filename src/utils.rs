@@ -1,5 +1,5 @@
 use crate::MAINNET_INFO_API_URL;
-use anyhow::{Context, bail};
+use anyhow::{Context};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
@@ -20,7 +20,7 @@ pub enum InfoRequest {
     },
     OpenOrders {
         user: String,
-    }
+    },
 }
 
 pub async fn send_info_request<T: for<'a> Deserialize<'a>>(
@@ -51,4 +51,15 @@ pub async fn send_info_request<T: for<'a> Deserialize<'a>>(
         .context("Failed to deserialize the response body as JSON")?;
 
     Ok(json_response)
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Config {
+    pub user_address: Option<String>,
+    pub vault_address: Option<String>,
+}
+
+pub async fn read_config() -> anyhow::Result<Config> {
+    let content = std::fs::read_to_string("config.toml")?;
+    Ok(toml::from_str(&content)?)
 }

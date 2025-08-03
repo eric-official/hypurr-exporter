@@ -7,7 +7,12 @@ use axum::{
     routing::get,
 };
 use chrono::Utc;
-use hypurr_exporter::{metrics::Metrics, vault_details::get_vault_details, user_details::get_user_details};
+use hypurr_exporter::{
+    metrics::Metrics,
+    user_details::get_user_details,
+    utils::{Config, read_config},
+    vault_details::get_vault_details,
+};
 use prometheus::{Encoder, Registry, TextEncoder};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
@@ -17,6 +22,7 @@ use tracing::{error, info};
 pub struct AppState {
     metrics: Arc<Mutex<Metrics>>,
     registry: Registry,
+    config: Config,
 }
 
 #[tokio::main]
@@ -31,7 +37,18 @@ async fn main() -> anyhow::Result<()> {
     metrics.register(&registry)?;
     let metrics = Arc::new(Mutex::new(metrics));
 
-    let state = AppState { metrics, registry };
+    let config = read_config().await?;
+    info!(
+        "Read config.toml with user address: {} and vault address: {}",
+        config.clone().user_address.unwrap_or("None".into()),
+        config.clone().vault_address.unwrap_or("None".into())
+    );
+
+    let state = AppState {
+        metrics,
+        registry,
+        config,
+    };
 
     let app = Router::new()
         .route("/metrics", get(handle_metrics))
@@ -50,17 +67,33 @@ async fn main() -> anyhow::Result<()> {
 pub async fn handle_metrics(
     State(app_state): State<AppState>,
 ) -> Result<Response, (StatusCode, String)> {
-    let AppState { metrics, registry } = app_state;
+    let AppState {
+        metrics,
+        registry,
+        config,
+    } = app_state;
 
-    let vault_details = get_vault_details().await.unwrap_or_else(|e| {
-        error!("Failed receive the vault details: {e:?}");
+    let vault_details = if let Some(vault_address) = config.vault_address {
+        info!("Querying vault details for address: {}", vault_address);
+        get_vault_details(&vault_address).await.unwrap_or_else(|e| {
+            error!("Failed receive the vault details: {e:?}");
+            (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, false, false)
+        })
+    } else {
+        info!("No vault address got configured. Skipping the query of vault details!");
         (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, false, false)
-    });
+    };
 
-    let user_details = get_user_details().await.unwrap_or_else(|e| {
-        error!("Failed receive the vault details: {e:?}");
+    let user_details = if let Some(user_address) = config.user_address {
+        info!("Querying user details for address: {}", user_address);
+        get_user_details(user_address).await.unwrap_or_else(|e| {
+            error!("Failed receive the vault details: {e:?}");
+            (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
+        })
+    } else {
+        info!("No user address got configured. Skipping the query of user details!");
         (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
-    });
+    };
 
     let metrics = metrics.lock().await;
     metrics.update(vault_details, user_details).map_err(|e| {

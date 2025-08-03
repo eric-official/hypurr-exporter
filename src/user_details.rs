@@ -11,7 +11,7 @@ pub struct UserStakingSummary {
     delegated: String,
     undelegated: String,
     total_pending_withdrawal: String,
-    n_pending_withdrawals: i64
+    n_pending_withdrawals: i64,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -25,15 +25,16 @@ pub struct OpenOrders {
     timestamp: i64,
 }
 
-pub async fn get_user_details() -> anyhow::Result<(f64, f64, f64, f64, f64, usize, f64)> {
+pub async fn get_user_details(
+    user_address: String,
+) -> anyhow::Result<(f64, f64, f64, f64, f64, usize, f64)> {
     let user_portfolio: Vec<PortfolioEntry> = send_info_request(InfoRequest::Portfolio {
-        user: "0x2ba553d9f990a3b66b03b2dc0d030dfc1c061036".to_string(),
+        user: user_address.clone(),
     })
     .await?;
 
-    let daily_portfolio_entries = if let Some(daily_portfolio_entries) = user_portfolio
-        .iter()
-        .find(|entry| entry.period == "day")
+    let daily_portfolio_entries = if let Some(daily_portfolio_entries) =
+        user_portfolio.iter().find(|entry| entry.period == "day")
     {
         daily_portfolio_entries
     } else {
@@ -62,15 +63,14 @@ pub async fn get_user_details() -> anyhow::Result<(f64, f64, f64, f64, f64, usiz
         bail!("Couldn't find find the latest PnL of the vault!");
     };
 
-    let user_staking_summary: UserStakingSummary = send_info_request(InfoRequest::DelegatorSummary {
-        user: "0x2ba553d9f990a3b66b03b2dc0d030dfc1c061036".to_string(),
-    })
-    .await?;
+    let user_staking_summary: UserStakingSummary =
+        send_info_request(InfoRequest::DelegatorSummary {
+            user: user_address.clone(),
+        })
+        .await?;
 
-    let user_open_orders: Vec<OpenOrders> = send_info_request(InfoRequest::OpenOrders {
-        user: "0x2ba553d9f990a3b66b03b2dc0d030dfc1c061036".to_string(),
-    })
-    .await?;
+    let user_open_orders: Vec<OpenOrders> =
+        send_info_request(InfoRequest::OpenOrders { user: user_address }).await?;
 
     let user_account_value = latest_account_value.1.parse()?;
     let user_pnl = latest_pnl.1.parse()?;
@@ -78,7 +78,8 @@ pub async fn get_user_details() -> anyhow::Result<(f64, f64, f64, f64, f64, usiz
     let user_staking_undelegated = user_staking_summary.undelegated.parse()?;
     let user_staking_pending_withdrawal = user_staking_summary.total_pending_withdrawal.parse()?;
     let user_num_open_orders = user_open_orders.len();
-    let user_value_open_orders = user_open_orders.iter()
+    let user_value_open_orders = user_open_orders
+        .iter()
         .filter_map(|order| {
             let px = order.limit_px.parse::<f64>().ok()?;
             let sz = order.sz.parse::<f64>().ok()?;
@@ -86,5 +87,13 @@ pub async fn get_user_details() -> anyhow::Result<(f64, f64, f64, f64, f64, usiz
         })
         .sum();
 
-    Ok((user_account_value, user_pnl, user_staking_delegated, user_staking_undelegated, user_staking_pending_withdrawal, user_num_open_orders, user_value_open_orders))
+    Ok((
+        user_account_value,
+        user_pnl,
+        user_staking_delegated,
+        user_staking_undelegated,
+        user_staking_pending_withdrawal,
+        user_num_open_orders,
+        user_value_open_orders,
+    ))
 }

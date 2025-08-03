@@ -63,10 +63,11 @@ pub struct RelationshipData {
     pub child_addresses: Vec<String>,
 }
 
-pub async fn get_vault_details()
--> anyhow::Result<(f64, f64, f64, f64, f64, usize, f64, f64, bool, bool)> {
+pub async fn get_vault_details(
+    vault_address: &str,
+) -> anyhow::Result<(f64, f64, f64, f64, f64, usize, f64, f64, bool, bool)> {
     let vault_details: VaultDetails = send_info_request(InfoRequest::VaultDetails {
-        vault_address: "0xdfc24b077bc1425ad1dea75bcb6f8158e10df303".to_string(),
+        vault_address: vault_address.to_string(),
     })
     .await?;
 
