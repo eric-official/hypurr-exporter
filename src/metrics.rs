@@ -2,6 +2,13 @@ use prometheus::{Error, Gauge, Opts, Registry};
 
 #[derive(Debug)]
 pub struct Metrics {
+    pub hyperliquid_price: Gauge,
+    pub hyperliquid_marketcap: Gauge,
+    pub hyperliquid_fdv: Gauge,
+    pub hyperliquid_tvl: Gauge,
+    pub hyperliquid_circulating_supply: Gauge,
+    pub hyperliquid_total_supply: Gauge,
+
     pub vault_value: Gauge,
     pub vault_pnl: Gauge,
     pub vault_apr: Gauge,
@@ -25,6 +32,28 @@ pub struct Metrics {
 impl Metrics {
     pub fn new() -> Result<Self, Error> {
         let metrics = Metrics {
+            hyperliquid_price: Gauge::with_opts(Opts::new("hyperliquid_price", "The current market price of the Hyperliquid token (HYPE) in USD"))?,
+            hyperliquid_marketcap: Gauge::with_opts(Opts::new(
+                "hyperliquid_marketcap",
+                "The total market value of Hyperliquid's circulating supply",
+            ))?,
+            hyperliquid_fdv: Gauge::with_opts(Opts::new(
+                "hyperliquid_fdv",
+                "The theoretical market capitalization of a coin if the entirety of its supply is in circulation, based on its current market price",
+            ))?,
+            hyperliquid_tvl: Gauge::with_opts(Opts::new(
+                "hyperliquid_tvl",
+                "Capital deposited into the platform in the form of loan collateral or liquidity trading pool",
+            ))?,
+            hyperliquid_circulating_supply: Gauge::with_opts(Opts::new(
+                "hyperliquid_circulating_supply",
+                "The amount of coins that are circulating in the market and are tradeable by the public",
+            ))?,
+            hyperliquid_total_supply: Gauge::with_opts(Opts::new(
+                "hyperliquid_total_supply",
+                "The amount of coins that have already been created, minus any coins that have been burned",
+            ))?,
+
             vault_value: Gauge::with_opts(Opts::new(
                 "vault_value",
                 "The total value locked (TVL) of the vault",
@@ -94,6 +123,13 @@ impl Metrics {
     }
 
     pub fn register(&self, registry: &Registry) -> Result<(), Error> {
+        registry.register(Box::new(self.hyperliquid_price.clone()))?;
+        registry.register(Box::new(self.hyperliquid_marketcap.clone()))?;
+        registry.register(Box::new(self.hyperliquid_fdv.clone()))?;
+        registry.register(Box::new(self.hyperliquid_tvl.clone()))?;
+        registry.register(Box::new(self.hyperliquid_circulating_supply.clone()))?;
+        registry.register(Box::new(self.hyperliquid_total_supply.clone()))?;
+
         registry.register(Box::new(self.vault_value.clone()))?;
         registry.register(Box::new(self.vault_pnl.clone()))?;
         registry.register(Box::new(self.vault_apr.clone()))?;
@@ -118,9 +154,20 @@ impl Metrics {
 
     pub fn update(
         &self,
+        coingecko_financial_meta: (f64, i64, i64, i64, f64, f64),
         vault_details: (f64, f64, f64, f64, f64, usize, f64, f64, bool, bool),
         user_details: (f64, f64, f64, f64, f64, usize, f64),
     ) -> Result<(), Error> {
+        self.hyperliquid_price.set(coingecko_financial_meta.0);
+        self.hyperliquid_marketcap
+            .set(coingecko_financial_meta.1 as f64);
+        self.hyperliquid_fdv.set(coingecko_financial_meta.2 as f64);
+        self.hyperliquid_tvl.set(coingecko_financial_meta.3 as f64);
+        self.hyperliquid_circulating_supply
+            .set(coingecko_financial_meta.4);
+        self.hyperliquid_total_supply
+            .set(coingecko_financial_meta.5);
+
         self.vault_value.set(vault_details.0);
         self.vault_pnl.set(vault_details.1);
         self.vault_apr.set(vault_details.2);

@@ -8,6 +8,7 @@ use axum::{
 };
 use chrono::Utc;
 use hypurr_exporter::{
+    financial_meta::get_coingecko_data,
     metrics::Metrics,
     user_details::get_user_details,
     utils::{Config, read_config},
@@ -73,6 +74,21 @@ pub async fn handle_metrics(
         config,
     } = app_state;
 
+    let coingecko_financial_meta = if let Some(coingecko_key) = config.coingecko_key {
+        info!("Querying financial meta information from Coingecko");
+        get_coingecko_data(&coingecko_key)
+            .await
+            .unwrap_or_else(|e| {
+                error!("Failed receive the vault details: {e:?}");
+                (0.0, 0, 0, 0, 0.0, 0.0)
+            })
+    } else {
+        info!(
+            "No Coingecko key got configured. Skipping the query of financial meta information from Coingecko!"
+        );
+        (0.0, 0, 0, 0, 0.0, 0.0)
+    };
+
     let vault_details = if let Some(vault_address) = config.vault_address {
         info!("Querying vault details for address: {}", vault_address);
         get_vault_details(&vault_address).await.unwrap_or_else(|e| {
@@ -96,11 +112,13 @@ pub async fn handle_metrics(
     };
 
     let metrics = metrics.lock().await;
-    metrics.update(vault_details, user_details).map_err(|e| {
-        let error_message = format!("Failed to update metrics: {e:?}");
-        error!(error_message);
-        (StatusCode::INTERNAL_SERVER_ERROR, error_message)
-    })?;
+    metrics
+        .update(coingecko_financial_meta, vault_details, user_details)
+        .map_err(|e| {
+            let error_message = format!("Failed to update metrics: {e:?}");
+            error!(error_message);
+            (StatusCode::INTERNAL_SERVER_ERROR, error_message)
+        })?;
 
     let encoder = TextEncoder::new();
     let metric_families = registry.gather();

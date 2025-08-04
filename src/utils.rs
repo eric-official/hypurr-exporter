@@ -1,5 +1,5 @@
 use crate::MAINNET_INFO_API_URL;
-use anyhow::{Context};
+use anyhow::Context;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
@@ -57,6 +57,7 @@ pub async fn send_info_request<T: for<'a> Deserialize<'a>>(
 pub struct Config {
     pub user_address: Option<String>,
     pub vault_address: Option<String>,
+    pub coingecko_key: Option<String>,
 }
 
 pub async fn read_config() -> anyhow::Result<Config> {
