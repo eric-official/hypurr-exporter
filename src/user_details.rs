@@ -38,7 +38,7 @@ pub async fn get_user_details(
     {
         daily_portfolio_entries
     } else {
-        bail!("Couldn't find daily portfolio entries in the vault details!");
+        bail!("Couldn't find daily portfolio entries in the user details!");
     };
 
     let latest_account_value = if let Some(latest_account_value) = daily_portfolio_entries
@@ -49,7 +49,7 @@ pub async fn get_user_details(
     {
         latest_account_value
     } else {
-        bail!("Couldn't find find the latest account value of the vault!");
+        bail!("Couldn't find find the latest account value of the user!");
     };
 
     let latest_pnl = if let Some(latest_pnl) = daily_portfolio_entries
@@ -60,7 +60,7 @@ pub async fn get_user_details(
     {
         latest_pnl
     } else {
-        bail!("Couldn't find find the latest PnL of the vault!");
+        bail!("Couldn't find find the latest PnL of the user!");
     };
 
     let user_staking_summary: UserStakingSummary =

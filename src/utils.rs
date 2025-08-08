@@ -21,6 +21,8 @@ pub enum InfoRequest {
     OpenOrders {
         user: String,
     },
+    SpotMeta,
+    Meta,
 }
 
 pub async fn send_info_request<T: for<'a> Deserialize<'a>>(
@@ -58,6 +60,7 @@ pub struct Config {
     pub user_address: Option<String>,
     pub vault_address: Option<String>,
     pub coingecko_key: Option<String>,
+    pub alchemy_key: Option<String>,
 }
 
 pub async fn read_config() -> anyhow::Result<Config> {

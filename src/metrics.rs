@@ -9,6 +9,12 @@ pub struct Metrics {
     pub hyperliquid_circulating_supply: Gauge,
     pub hyperliquid_total_supply: Gauge,
 
+    pub hyperliquid_block_number: Gauge,
+    pub hyperliquid_base_fee: Gauge,
+    pub hyperliquid_af_account_value: Gauge,
+    pub hyperliquid_num_spot_tokens: Gauge,
+    pub hyperliquid_num_perp_tokens: Gauge,
+
     pub vault_value: Gauge,
     pub vault_pnl: Gauge,
     pub vault_apr: Gauge,
@@ -32,7 +38,10 @@ pub struct Metrics {
 impl Metrics {
     pub fn new() -> Result<Self, Error> {
         let metrics = Metrics {
-            hyperliquid_price: Gauge::with_opts(Opts::new("hyperliquid_price", "The current market price of the Hyperliquid token (HYPE) in USD"))?,
+            hyperliquid_price: Gauge::with_opts(Opts::new(
+                "hyperliquid_price",
+                "The current market price of the Hyperliquid token (HYPE) in USD",
+            ))?,
             hyperliquid_marketcap: Gauge::with_opts(Opts::new(
                 "hyperliquid_marketcap",
                 "The total market value of Hyperliquid's circulating supply",
@@ -53,6 +62,28 @@ impl Metrics {
                 "hyperliquid_total_supply",
                 "The amount of coins that have already been created, minus any coins that have been burned",
             ))?,
+
+            hyperliquid_block_number: Gauge::with_opts(Opts::new(
+                "hyperliquid_block_number",
+                "The current block number of the HyperEVM",
+            ))?,
+            hyperliquid_base_fee: Gauge::with_opts(Opts::new(
+                "hyperliquid_base_fee",
+                "The current base fee for the next small block on HyperEVM",
+            ))?,
+            hyperliquid_af_account_value: Gauge::with_opts(Opts::new(
+                "hyperliquid_af_account_value",
+                "The current account value of theHyperliquid Assistance Fund",
+            ))?,
+            hyperliquid_num_spot_tokens: Gauge::with_opts(Opts::new(
+                "hyperliquid_num_spot_tokens",
+                "The current number of spot tokens on Hyperliquid",
+            ))?,
+            hyperliquid_num_perp_tokens: Gauge::with_opts(Opts::new(
+                "hyperliquid_num_perp_tokens",
+                "TThe current number of perp tokens on Hyperliquid",
+            ))?,
+
 
             vault_value: Gauge::with_opts(Opts::new(
                 "vault_value",
@@ -130,6 +161,12 @@ impl Metrics {
         registry.register(Box::new(self.hyperliquid_circulating_supply.clone()))?;
         registry.register(Box::new(self.hyperliquid_total_supply.clone()))?;
 
+        registry.register(Box::new(self.hyperliquid_block_number.clone()))?;
+        registry.register(Box::new(self.hyperliquid_base_fee.clone()))?;
+        registry.register(Box::new(self.hyperliquid_af_account_value.clone()))?;
+        registry.register(Box::new(self.hyperliquid_num_spot_tokens.clone()))?;
+        registry.register(Box::new(self.hyperliquid_num_perp_tokens.clone()))?;
+
         registry.register(Box::new(self.vault_value.clone()))?;
         registry.register(Box::new(self.vault_pnl.clone()))?;
         registry.register(Box::new(self.vault_apr.clone()))?;
@@ -155,6 +192,7 @@ impl Metrics {
     pub fn update(
         &self,
         coingecko_financial_meta: (f64, i64, i64, i64, f64, f64),
+        protocol_meta: (u64, u64, f64, usize, usize),
         vault_details: (f64, f64, f64, f64, f64, usize, f64, f64, bool, bool),
         user_details: (f64, f64, f64, f64, f64, usize, f64),
     ) -> Result<(), Error> {
@@ -167,6 +205,12 @@ impl Metrics {
             .set(coingecko_financial_meta.4);
         self.hyperliquid_total_supply
             .set(coingecko_financial_meta.5);
+
+        self.hyperliquid_block_number.set(protocol_meta.0 as f64);
+        self.hyperliquid_base_fee.set(protocol_meta.1 as f64);
+        self.hyperliquid_af_account_value.set(protocol_meta.2);
+        self.hyperliquid_num_spot_tokens.set(protocol_meta.3 as f64);
+        self.hyperliquid_num_perp_tokens.set(protocol_meta.4 as f64);
 
         self.vault_value.set(vault_details.0);
         self.vault_pnl.set(vault_details.1);

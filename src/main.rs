@@ -10,6 +10,7 @@ use chrono::Utc;
 use hypurr_exporter::{
     financial_meta::get_coingecko_data,
     metrics::Metrics,
+    protocol_meta::get_protocol_data,
     user_details::get_user_details,
     utils::{Config, read_config},
     vault_details::get_vault_details,
@@ -79,7 +80,7 @@ pub async fn handle_metrics(
         get_coingecko_data(&coingecko_key)
             .await
             .unwrap_or_else(|e| {
-                error!("Failed receive the vault details: {e:?}");
+                error!("Failed receive the financial meta details: {e:?}");
                 (0.0, 0, 0, 0, 0.0, 0.0)
             })
     } else {
@@ -87,6 +88,21 @@ pub async fn handle_metrics(
             "No Coingecko key got configured. Skipping the query of financial meta information from Coingecko!"
         );
         (0.0, 0, 0, 0, 0.0, 0.0)
+    };
+
+    let protocol_meta = if let Some(alchemy_key) = config.alchemy_key {
+        info!("Querying protocol meta information from Alchemy and Hyperliquid");
+        get_protocol_data(&alchemy_key)
+            .await
+            .unwrap_or_else(|e| {
+                error!("Failed receive the protocol meta details: {e:?}");
+                (0, 0, 0.0, 0, 0)
+            })
+    } else {
+        info!(
+            "No Alchemy key got configured. Skipping the query of protocol meta information from Alchemy and Hyperliquid!"
+        );
+        (0, 0, 0.0, 0, 0)
     };
 
     let vault_details = if let Some(vault_address) = config.vault_address {
@@ -103,7 +119,7 @@ pub async fn handle_metrics(
     let user_details = if let Some(user_address) = config.user_address {
         info!("Querying user details for address: {}", user_address);
         get_user_details(user_address).await.unwrap_or_else(|e| {
-            error!("Failed receive the vault details: {e:?}");
+            error!("Failed receive the user details: {e:?}");
             (0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
         })
     } else {
@@ -113,7 +129,7 @@ pub async fn handle_metrics(
 
     let metrics = metrics.lock().await;
     metrics
-        .update(coingecko_financial_meta, vault_details, user_details)
+        .update(coingecko_financial_meta, protocol_meta, vault_details, user_details)
         .map_err(|e| {
             let error_message = format!("Failed to update metrics: {e:?}");
             error!(error_message);

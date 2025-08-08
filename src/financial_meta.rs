@@ -8,13 +8,13 @@ pub async fn get_coingecko_data(
 ) -> anyhow::Result<(f64, i64, i64, i64, f64, f64)> {
     let http_client = Client::new();
     let url = COINGECKO_HL_API_URL.to_string();
+
     let response = http_client
         .get(url)
         .header("accept", "application/json")
         .header("x-cg-api-key", coingecko_key)
         .send()
         .await?;
-
     let json: serde_json::Value = response.json().await?;
 
     let hyperliquid_price =
