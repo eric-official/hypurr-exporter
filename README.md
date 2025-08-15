@@ -34,7 +34,7 @@ Currently, the following metrics are exposed:
 
 ## Usage
 
-The ENERANDO exporter can be used by running the following two commands in seperate terminal windows:
+The Hypurr exporter can be used by running the following two commands in seperate terminal windows:
 
     cargo run
     curl http://0.0.0.0:3000/metrics
