@@ -1,4 +1,4 @@
-# enerando-exporter
+# hypurr-exporter
 
 ## Table of Contents
 
@@ -31,10 +31,34 @@ Currently, the following metrics are exposed:
 | `hyperliquid_af_account_value     ` | Gauge | The current account value of the Hyperliquid Assistance Fund |
 | `hyperliquid_num_spot_tokens     ` | Gauge | The current number of spot tokens on Hyperliquid |
 | `hyperliquid_num_perp_tokens     ` | Gauge | The current number of perp tokens on Hyperliquid |
+| `vault_value     ` | Gauge | The total value locked (TVL) of the vault |
+| `vault_apr     ` | Gauge | The current number of perp tokens on Hyperliquid |
+| `vault_leader_fraction     ` | Gauge | The fraction of the vault controlled or owned by the leader |
+| `vault_leader_comission     ` | Gauge | The commission that the leader earns |
+| `vault_num_followers     ` | Gauge | The number of followers of the vault |
+| `vault_max_distributable     ` | Gauge | The maximum amount that can be distributed from the vault |
+| `vault_max_withdrawable     ` | Gauge | The maximum amount that can be withdrawn from the vault |
+| `vault_is_closed     ` | Gauge | A flag indicating whether the vault is closed or not |
+| `vault_allow_deposits     ` | Gauge | A flag indicating whether new deposits are allowed into the vault |
+| `user_account_value     ` | Gauge | The value of the user wallet |
+| `user_pnl     ` | Gauge | The profitability of the user |
+| `user_staking_delegated     ` | Gauge | The value of funds delegated to stakers |
+| `user_staking_undelegated     ` | Gauge | The value of funds undelegated from stakers |
+| `user_staking_pending_withdrawal     ` | Gauge | The value of funds which are waiting be unstaked |
+| `user_num_open_orders     ` | Gauge | The number of open orders by a user |
+| `user_value_open_orders     ` | Gauge | The value of open orders by a user |
 
 ## Usage
+
+### Local
 
 The Hypurr exporter can be used by running the following two commands in seperate terminal windows:
 
     cargo run
-    curl http://0.0.0.0:3000/metrics
+    curl http://0.0.0.0:3000/
+    
+### Docker
+
+    docker build -t ghcr.io/hypurr/exporter .
+    docker run -p 3000:3000 -v ./config.toml:/app/config.toml ghcr.io/hypurr/exporter
+

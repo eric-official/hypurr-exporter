@@ -125,9 +125,9 @@ impl Metrics {
 
             user_account_value: Gauge::with_opts(Opts::new(
                 "user_account_value",
-                "The profitability of the user",
+                "The value of the user wallet",
             ))?,
-            user_pnl: Gauge::with_opts(Opts::new("user_pnl", "The profitability of the vault"))?,
+            user_pnl: Gauge::with_opts(Opts::new("user_pnl", "The profitability of the user"))?,
             user_staking_delegated: Gauge::with_opts(Opts::new(
                 "user_staking_delegated",
                 "The value of funds delegated to stakers",
