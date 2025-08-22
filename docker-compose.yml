@@ -1,0 +1,51 @@
+services:
+  hypurr-exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # If you’re on Apple Silicon and previously hit arch issues, you can force:
+    # platform: linux/amd64
+    container_name: hypurr-exporter
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+    healthcheck:
+      test: ["CMD", "true"]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    # platform: linux/amd64  # keep consistent if you force amd64 above
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      hypurr-exporter:
+        condition: service_healthy
+    restart: unless-stopped
+
+  grafana:
+      image: grafana/grafana:11.1.0
+      container_name: grafana
+      environment:
+        GF_SECURITY_ADMIN_USER: "admin"
+        GF_SECURITY_ADMIN_PASSWORD: "admin"
+        TZ: "Europe/Berlin"
+      ports:
+        - "8000:3000"
+      volumes:
+        - grafana_data:/var/lib/grafana
+        - ./grafana/provisioning:/etc/grafana/provisioning
+      depends_on:
+        - prometheus
+      restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

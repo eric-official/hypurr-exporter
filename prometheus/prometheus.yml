@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+
+scrape_configs:
+  - job_name: "hypurr_exporter"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["hypurr-exporter:3000"]

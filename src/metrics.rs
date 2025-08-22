@@ -73,7 +73,7 @@ impl Metrics {
             ))?,
             hyperliquid_af_account_value: Gauge::with_opts(Opts::new(
                 "hyperliquid_af_account_value",
-                "The current account value of theHyperliquid Assistance Fund",
+                "The current account value of the Hyperliquid Assistance Fund",
             ))?,
             hyperliquid_num_spot_tokens: Gauge::with_opts(Opts::new(
                 "hyperliquid_num_spot_tokens",
@@ -221,7 +221,7 @@ impl Metrics {
         self.vault_max_distributable.set(vault_details.6);
         self.vault_max_withdrawable.set(vault_details.7);
         self.vault_is_closed.set(bool_to_f64(vault_details.8));
-        self.vault_is_closed.set(bool_to_f64(vault_details.9));
+        self.vault_allow_deposits.set(bool_to_f64(vault_details.9));
 
         self.user_account_value.set(user_details.0);
         self.user_pnl.set(user_details.1);
