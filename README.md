@@ -17,7 +17,7 @@
 
 ## Overview
 
-The Hypurr exporter provides a custom Prometheus exporter to expose metrics about a user, a vault and general information on Hyperliquuid. General-purpose exporters, like the node exporter, provide relevant metrics for a broad range of companies and use cases. To answer questions about our infrastructure and individual use cases, this custom Prometheus exporter is developed.
+The Hypurr Exporter is a lightweight Rust service that collects both ecosystem-wide and account-specific metrics from Hyperliquid. Builders and power users often struggle with siloed monitoring tools that only cover part of the picture — either systematic risks or personal account/vault risks. The Hypurr exporter bridges that gap by exposing everything in a single Prometheus-compatible format. With Grafana dashboards on top, users can easily customize and visualize the exact metrics they care about.
 
 ## Prerequisites
 
