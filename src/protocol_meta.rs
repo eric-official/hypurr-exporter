@@ -2,6 +2,7 @@ use anyhow::bail;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use tracing::error;
 
 use crate::{
     consts::ALCHEMY_API_URL,
@@ -143,8 +144,15 @@ pub async fn get_protocol_data(alchemy_key: &str) -> anyhow::Result<(u64, u64, f
 
     let af_account_value = latest_account_value.1.parse()?;
 
-    let spot_tokens: SpotMetaData = send_info_request(InfoRequest::SpotMeta).await?;
-    let num_spot_tokens = spot_tokens.tokens.len();
+    let num_spot_tokens = match send_info_request::<SpotMetaData>(InfoRequest::SpotMeta).await {
+        Ok(spot_tokens) => {
+            spot_tokens.tokens.len()
+        },
+        Err(e) => {
+            error!("Error receiving SpotMeta: {e}");
+            0
+        }
+    };
 
     let perp_tokens: PerpMetaData = send_info_request(InfoRequest::Meta).await?;
     let num_perp_tokens = perp_tokens
